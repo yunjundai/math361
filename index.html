@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>除法小測站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: a single centered exercise-book column on graph paper; one question per screen for tablets; teacher view widens to a report. */
+:root{
+  --bg:#EEF3F0; --grid:rgba(47,125,91,.07); --card:#FFFFFF; --ink:#1E2B28; --muted:#5A6B65; --line:#D5E0DA;
+  --accent:#D25F27; --accent-soft:#FBE7DB; --on-accent:#FFFFFF;
+  --good:#2F7D5B; --good-soft:#DDF0E6; --bad:#BF3B34; --bad-soft:#F8E0DE; --warn:#A86A12; --warn-soft:#F7EBD3;
+  --focus:#2A6FDB;
+  --f-q:"LXGW WenKai TC","Kaiti TC","DFKai-SB","BiauKai",serif;
+  --f-ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121916; --grid:rgba(120,200,160,.06); --card:#1B2421; --ink:#E6EEEA; --muted:#9BAEA6; --line:#2D3A35;
+  --accent:#F0874E; --accent-soft:#3A2519; --on-accent:#1A0E07;
+  --good:#5CC28F; --good-soft:#173328; --bad:#F2786E; --bad-soft:#3A1D1B; --warn:#E3AE55; --warn-soft:#352A15; --focus:#7FB0FF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121916; --grid:rgba(120,200,160,.06); --card:#1B2421; --ink:#E6EEEA; --muted:#9BAEA6; --line:#2D3A35;
+  --accent:#F0874E; --accent-soft:#3A2519; --on-accent:#1A0E07;
+  --good:#5CC28F; --good-soft:#173328; --bad:#F2786E; --bad-soft:#3A1D1B; --warn:#E3AE55; --warn-soft:#352A15; --focus:#7FB0FF; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;min-height:100%}
+#app{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+#app.wide{max-width:1080px}
+h1,h2,h3{font-family:var(--f-q);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:2rem} h2{font-size:1.4rem} h3{font-size:1.1rem}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.spacer{flex:1}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:10px 20px;cursor:pointer;font-weight:500;min-height:44px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent;border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.big{font-size:1.15rem;padding:14px 30px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:500;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.plain{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:500}
+.inp{border:2px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;min-height:48px;width:100%}
+.inp:focus{border-color:var(--accent);outline:none}
+
+/* brand strip */
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand .mark{font-family:var(--f-q);font-weight:700;font-size:1.05rem;color:var(--accent);letter-spacing:.08em}
+.topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* start screen */
+.tests{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.tcard{text-align:left;border:2px solid var(--line);background:var(--card);border-radius:var(--r);padding:20px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:150px}
+.tcard .tag{font-size:.8rem;font-weight:700;letter-spacing:.12em;color:var(--muted)}
+.tcard .tt{font-family:var(--f-q);font-size:1.6rem;font-weight:700}
+.tcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tcard .eq{font-family:var(--f-q);font-size:1.25rem;color:var(--accent);margin-top:auto;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:8px 18px;cursor:pointer;font-weight:700;min-height:44px}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.nm{display:flex;align-items:center;gap:10px;border:2px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;min-height:52px;font-family:var(--f-q);font-size:1.2rem}
+.nm b{font-family:var(--f-ui);font-size:.95rem;min-width:1.6em;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.nm[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.nm[aria-pressed="true"] b{color:var(--accent)}
+.who{display:grid;grid-template-columns:1.3fr .7fr 1.3fr;gap:12px}
+@media (max-width:560px){.who{grid-template-columns:1fr 1fr}.who .full{grid-column:1/-1}}
+
+/* zhuyin */
+.zy{display:inline-flex;align-items:center;vertical-align:middle}
+.zy .b{display:none;writing-mode:vertical-rl;text-orientation:upright;font-size:.42em;line-height:1.05;letter-spacing:-.05em;margin-left:1px;font-family:var(--f-ui);font-weight:400;color:var(--muted)}
+.zhuyin .zy .b{display:inline-block}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-weight:500}
+.switch input{width:20px;height:20px;accent-color:var(--accent)}
+
+/* quiz */
+.qhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dot{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--card);font-size:.85rem;font-weight:700;cursor:pointer;font-variant-numeric:tabular-nums}
+.dot.done{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.dot.cur{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.qcard{display:flex;flex-direction:column;gap:20px;padding:26px}
+.qno{font-family:var(--f-q);font-size:1rem;color:var(--accent);font-weight:700;letter-spacing:.1em}
+.stem{font-family:var(--f-q);font-size:1.6rem;line-height:1.9;font-variant-numeric:tabular-nums}
+.zhuyin .stem{line-height:2.1}
+.pic{display:flex;flex-wrap:wrap;gap:6px;font-size:2rem;line-height:1;padding:14px;border:2px dashed var(--line);border-radius:12px;max-width:520px}
+.blanks{display:flex;flex-direction:column;gap:14px}
+.bl{display:flex;align-items:center;gap:10px;font-family:var(--f-q);font-size:1.4rem;flex-wrap:wrap}
+.nin{width:3.6em;text-align:center;font-family:var(--f-ui);font-weight:700;font-size:1.5rem;border:2px solid var(--line);border-radius:10px;padding:6px 4px;background:var(--card);font-variant-numeric:tabular-nums}
+.nin:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.eqline{font-family:var(--f-q);font-size:1.8rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;border:2px solid var(--line);background:var(--card);border-radius:12px;padding:14px 16px;cursor:pointer;font-family:var(--f-q);font-size:1.35rem;min-height:56px}
+.opt .k{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--f-ui);font-size:.95rem;font-weight:700}
+.opt[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt[aria-checked="true"] .k{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.qnav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.say{display:inline-flex;align-items:center;gap:6px}
+.say svg{width:18px;height:18px}
+
+/* long division */
+.ld{display:grid;grid-template-columns:auto auto auto;column-gap:14px;row-gap:8px;align-items:center;font-family:var(--f-ui);font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;justify-content:start}
+.ld .lbl{font-size:.8rem;font-weight:500;color:var(--muted);font-family:var(--f-ui)}
+.ld .dv{text-align:right}
+.ld .nb{border-top:3px solid var(--ink);border-left:3px solid var(--ink);border-top-left-radius:14px;padding:4px 14px 2px 16px;letter-spacing:.25em}
+.ld .cell{padding-left:16px}
+.ld .rule{grid-column:2;border-top:2px solid var(--ink);margin-left:16px}
+
+/* results */
+.score{display:flex;align-items:baseline;gap:10px;font-family:var(--f-q)}
+.score b{font-size:3.6rem;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.marks{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.mk{border-radius:10px;padding:8px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.mk.ok{background:var(--good-soft);color:var(--good)} .mk.no{background:var(--bad-soft);color:var(--bad)}
+.notice{border-radius:10px;padding:10px 14px;font-size:.92rem}
+.notice.warn{background:var(--warn-soft);color:var(--warn)} .notice.good{background:var(--good-soft);color:var(--good)} .notice.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* teacher */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.tile .v{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .l{font-size:.85rem;color:var(--muted);letter-spacing:.04em}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 16px;cursor:pointer;min-height:38px}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;font-size:.95rem}
+th{font-size:.8rem;color:var(--muted);font-weight:500;letter-spacing:.06em;background:var(--bg)}
+tr:last-child td{border-bottom:none}
+tr.sel td{background:var(--accent-soft)}
+td.num,th.num{text-align:right}
+.linkbtn{background:none;border:none;padding:0;cursor:pointer;color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:500}
+.bar{position:relative;height:10px;border-radius:5px;background:var(--bg);border:1px solid var(--line);overflow:hidden;min-width:80px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:5px}
+.bar i.pre{background:var(--muted)} .bar i.post{background:var(--accent)} .bar i.g{background:var(--good)} .bar i.w{background:var(--warn)} .bar i.r{background:var(--bad)}
+.ansbox{background:var(--good-soft)!important;border-color:var(--good)!important;color:var(--good)!important;opacity:1}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.right .k{background:var(--good);border-color:var(--good);color:var(--card)}
+div.opt{cursor:default}
+.itembtn{all:unset;cursor:pointer;display:block;border-radius:6px}
+.itembtn:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.itembtn .more{font-family:var(--f-ui);font-size:.8rem;color:var(--accent);font-weight:700;margin-left:8px;white-space:nowrap}
+.item.open{border-color:var(--accent)}
+.qprev{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:16px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.qprev .stem{font-size:1.35rem}
+.items{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:52px 1fr 170px;gap:14px;align-items:start}
+.item .id{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.item .txt{min-width:0;font-family:var(--f-q);font-size:1.05rem}
+.item .rate{display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.errs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-family:var(--f-ui)}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:3px 10px;font-size:.82rem}
+@media (max-width:600px){.item{grid-template-columns:44px 1fr}.item .rate{grid-column:1/-1}}
+.skills{display:grid;gap:10px}
+.sk{display:grid;grid-template-columns:minmax(0,190px) 1fr 52px;gap:12px;align-items:center;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+details.card summary{cursor:pointer;font-weight:700}
+.detail{border-left:4px solid var(--accent)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+textarea.csv{width:100%;min-height:140px;font-family:ui-monospace,monospace;font-size:.8rem;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink)}
+footer{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.qcard{animation:rise .25s ease-out}@keyframes rise{from{transform:translateY(6px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+
+
+<main id="app" aria-live="polite"></main>
+
+<script>
+/* ===== 設定：把 Supabase 的 Project URL 和 anon public key 貼在這兩行 ===== */
+const SUPABASE_URL = 'https://xegpslwwbsbjoavqmzdc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_ulJY6ycK6ElooPQCaM6rVA_Zpm556T-';
+/* ======================================================================= */
+const DATA = {"pre": {"id": "pre", "name": "前測", "title": "分裝與平分", "sub": "除法先備：用連減、乘法找答案", "skills": {"A": "包含除（每幾個一份）", "B": "等分除（平分）", "C": "解題策略（連減、乘法）"}, "items": [{"id": "P1", "skill": "A", "type": "num", "pic": ["🍓", 18], "stem": "有 18 顆草莓，每 6 顆裝成 1 盒，可以裝幾盒？", "blanks": [{"pre": "可以裝", "post": "盒", "ans": 3, "diag": {"12": "用減法 18−6，沒有想到要一直分下去", "108": "誤用乘法 18×6", "24": "誤用加法"}, "preH": "<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 18 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">草</span><span class=\"b\" aria-hidden=\"true\">ㄘㄠˇ</span></span><span class=\"zy\"><span class=\"c\">莓</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˊ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 6 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>，<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>？", "say": "有 18 顆草莓，每 6 顆裝成 1 盒，可以裝幾盒？"}, {"id": "P2", "skill": "B", "type": "num", "stem": "將 12 朵花平分給 4 個人，每個人可以分到幾朵花？", "blanks": [{"pre": "每人分到", "post": "朵", "ans": 3, "diag": {"8": "用減法 12−4", "16": "誤用加法", "48": "誤用乘法 12×4", "4": "把人數當答案"}, "preH": "<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">到</span><span class=\"b\" aria-hidden=\"true\">ㄉㄠˋ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">將</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧㄤ</span></span> 12 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">花</span><span class=\"b\" aria-hidden=\"true\">ㄏㄨㄚ</span></span><span class=\"zy\"><span class=\"c\">平</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">給</span><span class=\"b\" aria-hidden=\"true\">ㄍㄟˇ</span></span> 4 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span><span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">到</span><span class=\"b\" aria-hidden=\"true\">ㄉㄠˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">花</span><span class=\"b\" aria-hidden=\"true\">ㄏㄨㄚ</span></span>？", "say": "將 12 朵花平分給 4 個人，每個人可以分到幾朵花？"}, {"id": "P3", "skill": "A", "type": "num", "stem": "有 28 片餅乾，每 7 片裝成 1 袋，可以裝幾袋？", "blanks": [{"pre": "可以裝", "post": "袋", "ans": 4, "diag": {"21": "只減一次 28−7", "35": "誤用加法", "7": "把每袋片數當答案"}, "preH": "<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 28 <span class=\"zy\"><span class=\"c\">片</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄢˋ</span></span><span class=\"zy\"><span class=\"c\">餅</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧㄥˇ</span></span><span class=\"zy\"><span class=\"c\">乾</span><span class=\"b\" aria-hidden=\"true\">ㄍㄢ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 7 <span class=\"zy\"><span class=\"c\">片</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄢˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>，<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>？", "say": "有 28 片餅乾，每 7 片裝成 1 袋，可以裝幾袋？"}, {"id": "P4", "skill": "B", "type": "num", "stem": "有 20 瓶牛奶，平分放在 4 張桌子上，每張桌子上有幾瓶牛奶？", "blanks": [{"pre": "每張桌子", "post": "瓶", "ans": 5, "diag": {"16": "只減一次 20−4", "24": "誤用加法", "80": "誤用乘法 20×4"}, "preH": "<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">張</span><span class=\"b\" aria-hidden=\"true\">ㄓㄤ</span></span><span class=\"zy\"><span class=\"c\">桌</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">子</span><span class=\"b\" aria-hidden=\"true\">˙ㄗ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">瓶</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 20 <span class=\"zy\"><span class=\"c\">瓶</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">牛</span><span class=\"b\" aria-hidden=\"true\">ㄋㄧㄡˊ</span></span><span class=\"zy\"><span class=\"c\">奶</span><span class=\"b\" aria-hidden=\"true\">ㄋㄞˇ</span></span>，<span class=\"zy\"><span class=\"c\">平</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">放</span><span class=\"b\" aria-hidden=\"true\">ㄈㄤˋ</span></span><span class=\"zy\"><span class=\"c\">在</span><span class=\"b\" aria-hidden=\"true\">ㄗㄞˋ</span></span> 4 <span class=\"zy\"><span class=\"c\">張</span><span class=\"b\" aria-hidden=\"true\">ㄓㄤ</span></span><span class=\"zy\"><span class=\"c\">桌</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">子</span><span class=\"b\" aria-hidden=\"true\">˙ㄗ</span></span><span class=\"zy\"><span class=\"c\">上</span><span class=\"b\" aria-hidden=\"true\">ㄕㄤˋ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">張</span><span class=\"b\" aria-hidden=\"true\">ㄓㄤ</span></span><span class=\"zy\"><span class=\"c\">桌</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">子</span><span class=\"b\" aria-hidden=\"true\">˙ㄗ</span></span><span class=\"zy\"><span class=\"c\">上</span><span class=\"b\" aria-hidden=\"true\">ㄕㄤˋ</span></span><span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">瓶</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">牛</span><span class=\"b\" aria-hidden=\"true\">ㄋㄧㄡˊ</span></span><span class=\"zy\"><span class=\"c\">奶</span><span class=\"b\" aria-hidden=\"true\">ㄋㄞˇ</span></span>？", "say": "有 20 瓶牛奶，平分放在 4 張桌子上，每張桌子上有幾瓶牛奶？"}, {"id": "P5", "skill": "A", "type": "num", "stem": "將 15 個布丁，每 3 個裝成 1 盒，可以裝幾盒？", "blanks": [{"pre": "可以裝", "post": "盒", "ans": 5, "diag": {"12": "只減一次 15−3", "45": "誤用乘法 15×3", "18": "誤用加法"}, "preH": "<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">將</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧㄤ</span></span> 15 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">布</span><span class=\"b\" aria-hidden=\"true\">ㄅㄨˋ</span></span><span class=\"zy\"><span class=\"c\">丁</span><span class=\"b\" aria-hidden=\"true\">ㄉㄧㄥ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 3 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>，<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>？", "say": "將 15 個布丁，每 3 個裝成 1 盒，可以裝幾盒？"}, {"id": "P6", "skill": "A", "type": "num", "stem": "有 40 個人要划龍舟，每艘龍舟坐 10 個人，共需要幾艘龍舟？", "blanks": [{"pre": "需要", "post": "艘", "ans": 4, "diag": {"30": "只減一次 40−10", "400": "誤用乘法", "50": "誤用加法"}, "preH": "<span class=\"zy\"><span class=\"c\">需</span><span class=\"b\" aria-hidden=\"true\">ㄒㄩ</span></span><span class=\"zy\"><span class=\"c\">要</span><span class=\"b\" aria-hidden=\"true\">ㄧㄠˋ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">艘</span><span class=\"b\" aria-hidden=\"true\">ㄙㄠ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 40 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span><span class=\"zy\"><span class=\"c\">要</span><span class=\"b\" aria-hidden=\"true\">ㄧㄠˋ</span></span><span class=\"zy\"><span class=\"c\">划</span><span class=\"b\" aria-hidden=\"true\">ㄏㄨㄚˋ</span></span><span class=\"zy\"><span class=\"c\">龍</span><span class=\"b\" aria-hidden=\"true\">ㄌㄨㄥˊ</span></span><span class=\"zy\"><span class=\"c\">舟</span><span class=\"b\" aria-hidden=\"true\">ㄓㄡ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">艘</span><span class=\"b\" aria-hidden=\"true\">ㄙㄠ</span></span><span class=\"zy\"><span class=\"c\">龍</span><span class=\"b\" aria-hidden=\"true\">ㄌㄨㄥˊ</span></span><span class=\"zy\"><span class=\"c\">舟</span><span class=\"b\" aria-hidden=\"true\">ㄓㄡ</span></span><span class=\"zy\"><span class=\"c\">坐</span><span class=\"b\" aria-hidden=\"true\">ㄗㄨㄛˋ</span></span> 10 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span>，<span class=\"zy\"><span class=\"c\">共</span><span class=\"b\" aria-hidden=\"true\">ㄍㄨㄥˋ</span></span><span class=\"zy\"><span class=\"c\">需</span><span class=\"b\" aria-hidden=\"true\">ㄒㄩ</span></span><span class=\"zy\"><span class=\"c\">要</span><span class=\"b\" aria-hidden=\"true\">ㄧㄠˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">艘</span><span class=\"b\" aria-hidden=\"true\">ㄙㄠ</span></span><span class=\"zy\"><span class=\"c\">龍</span><span class=\"b\" aria-hidden=\"true\">ㄌㄨㄥˊ</span></span><span class=\"zy\"><span class=\"c\">舟</span><span class=\"b\" aria-hidden=\"true\">ㄓㄡ</span></span>？", "say": "有 40 個人要划龍舟，每艘龍舟坐 10 個人，共需要幾艘龍舟？"}, {"id": "P7", "skill": "C", "type": "mc", "stem": "有 16 顆橘子，每 4 顆裝成 1 袋。下面哪一種算法，可以找出裝幾袋？", "opts": ["16 − 4 − 4 − 4 − 4 = 0，減了 4 次", "16 + 4 = 20", "16 × 4 = 64", "16 − 4 = 12"], "ans": 0, "diag": {"1": "用加法，不了解分裝是「一份一份拿走」", "2": "看到兩個數就相乘", "3": "只減一次，沒有減到 0"}, "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 16 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">橘</span><span class=\"b\" aria-hidden=\"true\">ㄐㄩˊ</span></span><span class=\"zy\"><span class=\"c\">子</span><span class=\"b\" aria-hidden=\"true\">˙ㄗ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 4 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>。<span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">面</span><span class=\"b\" aria-hidden=\"true\">ㄇㄧㄢˋ</span></span><span class=\"zy\"><span class=\"c\">哪</span><span class=\"b\" aria-hidden=\"true\">ㄋㄚˇ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">種</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄥˇ</span></span><span class=\"zy\"><span class=\"c\">算</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄢˋ</span></span><span class=\"zy\"><span class=\"c\">法</span><span class=\"b\" aria-hidden=\"true\">ㄈㄚˇ</span></span>，<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">找</span><span class=\"b\" aria-hidden=\"true\">ㄓㄠˇ</span></span><span class=\"zy\"><span class=\"c\">出</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>？", "say": "有 16 顆橘子，每 4 顆裝成 1 袋。下面哪一種算法，可以找出裝幾袋？。第1個，16 減 4 減 4 減 4 減 4 = 0，減了 4 次。第2個，16 + 4 = 20。第3個，16 乘以 4 = 64。第4個，16 減 4 = 12", "optsH": ["16 − 4 − 4 − 4 − 4 = 0，<span class=\"zy\"><span class=\"c\">減</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧㄢˇ</span></span><span class=\"zy\"><span class=\"c\">了</span><span class=\"b\" aria-hidden=\"true\">˙ㄌㄜ</span></span> 4 <span class=\"zy\"><span class=\"c\">次</span><span class=\"b\" aria-hidden=\"true\">ㄘˋ</span></span>", "16 + 4 = 20", "16 × 4 = 64", "16 − 4 = 12"]}, {"id": "P8", "skill": "C", "type": "eq", "expr": ["6 × ", 0, " = 24"], "stem": "想一想，□ 裡面是多少？", "blanks": [{"ans": 4, "diag": {"18": "用減法 24−6", "30": "用加法 24+6", "144": "用乘法 24×6"}}], "stemH": "<span class=\"zy\"><span class=\"c\">想</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄤˇ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">想</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄤˇ</span></span>，□ <span class=\"zy\"><span class=\"c\">裡</span><span class=\"b\" aria-hidden=\"true\">ㄌㄧˇ</span></span><span class=\"zy\"><span class=\"c\">面</span><span class=\"b\" aria-hidden=\"true\">ㄇㄧㄢˋ</span></span><span class=\"zy\"><span class=\"c\">是</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">多</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">少</span><span class=\"b\" aria-hidden=\"true\">ㄕㄠˇ</span></span>？", "say": "想一想，多少 裡面是多少？", "exprH": ["6 × ", 0, " = 24"]}, {"id": "P9", "skill": "C", "type": "mc", "stem": "把 12 顆糖果平分給 3 個人。用乘法來想，下面哪一個算式是對的？", "opts": ["3 × 4 = 12", "12 × 3 = 36", "3 + 4 = 7", "12 − 3 = 9"], "ans": 0, "diag": {"1": "看到兩個數就相乘，沒有想到平分", "2": "用加法", "3": "只用減法減一次"}, "stemH": "<span class=\"zy\"><span class=\"c\">把</span><span class=\"b\" aria-hidden=\"true\">ㄅㄚˇ</span></span> 12 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">糖</span><span class=\"b\" aria-hidden=\"true\">ㄊㄤˊ</span></span><span class=\"zy\"><span class=\"c\">果</span><span class=\"b\" aria-hidden=\"true\">ㄍㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">平</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">給</span><span class=\"b\" aria-hidden=\"true\">ㄍㄟˇ</span></span> 3 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span>。<span class=\"zy\"><span class=\"c\">用</span><span class=\"b\" aria-hidden=\"true\">ㄩㄥˋ</span></span><span class=\"zy\"><span class=\"c\">乘</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span><span class=\"zy\"><span class=\"c\">法</span><span class=\"b\" aria-hidden=\"true\">ㄈㄚˇ</span></span><span class=\"zy\"><span class=\"c\">來</span><span class=\"b\" aria-hidden=\"true\">ㄌㄞˊ</span></span><span class=\"zy\"><span class=\"c\">想</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄤˇ</span></span>，<span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">面</span><span class=\"b\" aria-hidden=\"true\">ㄇㄧㄢˋ</span></span><span class=\"zy\"><span class=\"c\">哪</span><span class=\"b\" aria-hidden=\"true\">ㄋㄚˇ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">算</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄢˋ</span></span><span class=\"zy\"><span class=\"c\">式</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">是</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">對</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">的</span><span class=\"b\" aria-hidden=\"true\">˙ㄉㄜ</span></span>？", "say": "把 12 顆糖果平分給 3 個人。用乘法來想，下面哪一個算式是對的？。第1個，3 乘以 4 = 12。第2個，12 乘以 3 = 36。第3個，3 + 4 = 7。第4個，12 減 3 = 9", "optsH": ["3 × 4 = 12", "12 × 3 = 36", "3 + 4 = 7", "12 − 3 = 9"]}, {"id": "P10", "skill": "C", "type": "eq", "expr": ["7 × ", 0, " 的答案比 30 小，而且最接近 30"], "stem": "想一想，□ 裡面是多少？", "blanks": [{"ans": 4, "diag": {"5": "7×5=35 已經超過 30", "3": "沒有找到最接近的數", "23": "用減法 30−7"}}], "stemH": "<span class=\"zy\"><span class=\"c\">想</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄤˇ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">想</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄤˇ</span></span>，□ <span class=\"zy\"><span class=\"c\">裡</span><span class=\"b\" aria-hidden=\"true\">ㄌㄧˇ</span></span><span class=\"zy\"><span class=\"c\">面</span><span class=\"b\" aria-hidden=\"true\">ㄇㄧㄢˋ</span></span><span class=\"zy\"><span class=\"c\">是</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">多</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">少</span><span class=\"b\" aria-hidden=\"true\">ㄕㄠˇ</span></span>？", "say": "想一想，多少 裡面是多少？", "exprH": ["7 × ", 0, " <span class=\"zy\"><span class=\"c\">的</span><span class=\"b\" aria-hidden=\"true\">˙ㄉㄜ</span></span><span class=\"zy\"><span class=\"c\">答</span><span class=\"b\" aria-hidden=\"true\">ㄉㄚˊ</span></span><span class=\"zy\"><span class=\"c\">案</span><span class=\"b\" aria-hidden=\"true\">ㄢˋ</span></span><span class=\"zy\"><span class=\"c\">比</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧˇ</span></span> 30 <span class=\"zy\"><span class=\"c\">小</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄠˇ</span></span>，<span class=\"zy\"><span class=\"c\">而</span><span class=\"b\" aria-hidden=\"true\">ㄦˊ</span></span><span class=\"zy\"><span class=\"c\">且</span><span class=\"b\" aria-hidden=\"true\">ㄑㄧㄝˇ</span></span><span class=\"zy\"><span class=\"c\">最</span><span class=\"b\" aria-hidden=\"true\">ㄗㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">接</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧㄝ</span></span><span class=\"zy\"><span class=\"c\">近</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧㄣˋ</span></span> 30"]}], "titleH": "<span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">與</span><span class=\"b\" aria-hidden=\"true\">ㄩˇ</span></span><span class=\"zy\"><span class=\"c\">平</span><span class=\"b\" aria-hidden=\"true\">ㄆㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span>"}, "post": {"id": "post", "name": "後測", "title": "有餘數的除法", "sub": "第 6 單元　6-1 分裝與除、6-2 餘數", "skills": {"D": "分裝情境（裝滿幾份、剩下幾個）", "E": "用除法算式記錄", "F": "餘數的意義（比除數小、餘數 0）", "G": "算式各數的意義與讀法"}, "items": [{"id": "T1", "skill": "D", "type": "num", "stem": "有 20 個饅頭，每 5 個裝成 1 袋，最多可以裝滿幾袋？剩下幾個？", "blanks": [{"pre": "裝滿", "post": "袋", "ans": 4, "diag": {"15": "只減一次 20−5", "5": "把每袋個數當答案", "100": "誤用乘法"}, "preH": "<span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">滿</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˇ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>"}, {"pre": "剩下", "post": "個", "ans": 0, "diag": {"5": "剛好裝完時剩下 0 個"}, "preH": "<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 20 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">饅</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˊ</span></span><span class=\"zy\"><span class=\"c\">頭</span><span class=\"b\" aria-hidden=\"true\">ㄊㄡˊ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 5 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>，<span class=\"zy\"><span class=\"c\">最</span><span class=\"b\" aria-hidden=\"true\">ㄗㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">多</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">滿</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˇ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>？<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span>？", "say": "有 20 個饅頭，每 5 個裝成 1 袋，最多可以裝滿幾袋？剩下幾個？"}, {"id": "T2", "skill": "D", "type": "num", "pic": ["🌷", 11], "stem": "有 11 朵花，每 3 朵綁成 1 束，最多可以綁成幾束？剩下幾朵？", "blanks": [{"pre": "綁成", "post": "束", "ans": 3, "diag": {"4": "把不夠一束的也算成一束", "2": "少綁了一束"}, "preH": "<span class=\"zy\"><span class=\"c\">綁</span><span class=\"b\" aria-hidden=\"true\">ㄅㄤˇ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">束</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span>"}, {"pre": "剩下", "post": "朵", "ans": 2, "diag": {"5": "剩下的比 3 多，還能再綁一束", "0": "以為剛好分完", "1": "算成 11−9 時算錯"}, "preH": "<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 11 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">花</span><span class=\"b\" aria-hidden=\"true\">ㄏㄨㄚ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 3 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">綁</span><span class=\"b\" aria-hidden=\"true\">ㄅㄤˇ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">束</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span>，<span class=\"zy\"><span class=\"c\">最</span><span class=\"b\" aria-hidden=\"true\">ㄗㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">多</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">綁</span><span class=\"b\" aria-hidden=\"true\">ㄅㄤˇ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">束</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span>？<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span>？", "say": "有 11 朵花，每 3 朵綁成 1 束，最多可以綁成幾束？剩下幾朵？"}, {"id": "T3", "skill": "F", "type": "mc", "stem": "上一題剩下的 2 朵花，還能再綁成 1 束嗎？", "opts": ["不能，因為 2 朵比 3 朵少", "能，因為還有剩下的花", "能，再拿 1 朵就好", "不能，因為 2 比 11 小"], "ans": 0, "diag": {"1": "不了解「每 3 朵才能綁 1 束」", "2": "把題目沒有的花也算進去", "3": "拿剩下的數和全部的數比，沒有和每束的數比"}, "stemH": "<span class=\"zy\"><span class=\"c\">上</span><span class=\"b\" aria-hidden=\"true\">ㄕㄤˋ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">題</span><span class=\"b\" aria-hidden=\"true\">ㄊㄧˊ</span></span><span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">的</span><span class=\"b\" aria-hidden=\"true\">˙ㄉㄜ</span></span> 2 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">花</span><span class=\"b\" aria-hidden=\"true\">ㄏㄨㄚ</span></span>，<span class=\"zy\"><span class=\"c\">還</span><span class=\"b\" aria-hidden=\"true\">ㄏㄞˊ</span></span><span class=\"zy\"><span class=\"c\">能</span><span class=\"b\" aria-hidden=\"true\">ㄋㄥˊ</span></span><span class=\"zy\"><span class=\"c\">再</span><span class=\"b\" aria-hidden=\"true\">ㄗㄞˋ</span></span><span class=\"zy\"><span class=\"c\">綁</span><span class=\"b\" aria-hidden=\"true\">ㄅㄤˇ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">束</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span><span class=\"zy\"><span class=\"c\">嗎</span><span class=\"b\" aria-hidden=\"true\">˙ㄇㄚ</span></span>？", "say": "上一題剩下的 2 朵花，還能再綁成 1 束嗎？。第1個，不能，因為 2 朵比 3 朵少。第2個，能，因為還有剩下的花。第3個，能，再拿 1 朵就好。第4個，不能，因為 2 比 11 小", "optsH": ["<span class=\"zy\"><span class=\"c\">不</span><span class=\"b\" aria-hidden=\"true\">ㄅㄨˋ</span></span><span class=\"zy\"><span class=\"c\">能</span><span class=\"b\" aria-hidden=\"true\">ㄋㄥˊ</span></span>，<span class=\"zy\"><span class=\"c\">因</span><span class=\"b\" aria-hidden=\"true\">ㄧㄣ</span></span><span class=\"zy\"><span class=\"c\">為</span><span class=\"b\" aria-hidden=\"true\">ㄨㄟˋ</span></span> 2 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">比</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧˇ</span></span> 3 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">少</span><span class=\"b\" aria-hidden=\"true\">ㄕㄠˇ</span></span>", "<span class=\"zy\"><span class=\"c\">能</span><span class=\"b\" aria-hidden=\"true\">ㄋㄥˊ</span></span>，<span class=\"zy\"><span class=\"c\">因</span><span class=\"b\" aria-hidden=\"true\">ㄧㄣ</span></span><span class=\"zy\"><span class=\"c\">為</span><span class=\"b\" aria-hidden=\"true\">ㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">還</span><span class=\"b\" aria-hidden=\"true\">ㄏㄞˊ</span></span><span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span><span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">的</span><span class=\"b\" aria-hidden=\"true\">˙ㄉㄜ</span></span><span class=\"zy\"><span class=\"c\">花</span><span class=\"b\" aria-hidden=\"true\">ㄏㄨㄚ</span></span>", "<span class=\"zy\"><span class=\"c\">能</span><span class=\"b\" aria-hidden=\"true\">ㄋㄥˊ</span></span>，<span class=\"zy\"><span class=\"c\">再</span><span class=\"b\" aria-hidden=\"true\">ㄗㄞˋ</span></span><span class=\"zy\"><span class=\"c\">拿</span><span class=\"b\" aria-hidden=\"true\">ㄋㄚˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">朵</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">就</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧㄡˋ</span></span><span class=\"zy\"><span class=\"c\">好</span><span class=\"b\" aria-hidden=\"true\">ㄏㄠˇ</span></span>", "<span class=\"zy\"><span class=\"c\">不</span><span class=\"b\" aria-hidden=\"true\">ㄅㄨˋ</span></span><span class=\"zy\"><span class=\"c\">能</span><span class=\"b\" aria-hidden=\"true\">ㄋㄥˊ</span></span>，<span class=\"zy\"><span class=\"c\">因</span><span class=\"b\" aria-hidden=\"true\">ㄧㄣ</span></span><span class=\"zy\"><span class=\"c\">為</span><span class=\"b\" aria-hidden=\"true\">ㄨㄟˋ</span></span> 2 <span class=\"zy\"><span class=\"c\">比</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧˇ</span></span> 11 <span class=\"zy\"><span class=\"c\">小</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄠˇ</span></span>"]}, {"id": "T4", "skill": "E", "type": "eq", "expr": ["26 ÷ 7 = ", 0, " … ", 1], "stem": "有 26 個橘子，每 7 個裝成 1 袋，可以裝滿幾袋，剩下幾個？用除法算式記下來。", "blanks": [{"ans": 3, "diag": {"4": "7×4=28 已經超過 26", "2": "少裝一袋", "5": "把商和餘數寫反"}}, {"ans": 5, "diag": {"12": "餘數比除數 7 大，還能再裝", "3": "把商和餘數寫反", "19": "只減一次 26−7"}}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 26 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">橘</span><span class=\"b\" aria-hidden=\"true\">ㄐㄩˊ</span></span><span class=\"zy\"><span class=\"c\">子</span><span class=\"b\" aria-hidden=\"true\">˙ㄗ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 7 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>，<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">滿</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˇ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>，<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span>？<span class=\"zy\"><span class=\"c\">用</span><span class=\"b\" aria-hidden=\"true\">ㄩㄥˋ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">法</span><span class=\"b\" aria-hidden=\"true\">ㄈㄚˇ</span></span><span class=\"zy\"><span class=\"c\">算</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄢˋ</span></span><span class=\"zy\"><span class=\"c\">式</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">記</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">來</span><span class=\"b\" aria-hidden=\"true\">ㄌㄞˊ</span></span>。", "say": "有 26 個橘子，每 7 個裝成 1 袋，可以裝滿幾袋，剩下幾個？用除法算式記下來。", "exprH": ["26 ÷ 7 = ", 0, " … ", 1]}, {"id": "T5", "skill": "G", "type": "mc", "stem": "在「26 ÷ 7 = 3 … 5」裡，「3」表示什麼？", "opts": ["裝滿了 3 袋", "剩下 3 個", "每袋裝 3 個", "一共有 3 個橘子"], "ans": 0, "diag": {"1": "商和餘數的意義分不清", "2": "商和除數的意義分不清", "3": "不了解被除數的意義"}, "stemH": "<span class=\"zy\"><span class=\"c\">在</span><span class=\"b\" aria-hidden=\"true\">ㄗㄞˋ</span></span>「26 ÷ 7 = 3 … 5」<span class=\"zy\"><span class=\"c\">裡</span><span class=\"b\" aria-hidden=\"true\">ㄌㄧˇ</span></span>，「3」<span class=\"zy\"><span class=\"c\">表</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧㄠˇ</span></span><span class=\"zy\"><span class=\"c\">示</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">什</span><span class=\"b\" aria-hidden=\"true\">ㄕㄣˊ</span></span><span class=\"zy\"><span class=\"c\">麼</span><span class=\"b\" aria-hidden=\"true\">˙ㄇㄜ</span></span>？", "say": "在「26 除以 7 = 3 餘 5」裡，「3」表示什麼？。第1個，裝滿了 3 袋。第2個，剩下 3 個。第3個，每袋裝 3 個。第4個，一共有 3 個橘子", "optsH": ["<span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">滿</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˇ</span></span><span class=\"zy\"><span class=\"c\">了</span><span class=\"b\" aria-hidden=\"true\">˙ㄌㄜ</span></span> 3 <span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span>", "<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span> 3 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span>", "<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">袋</span><span class=\"b\" aria-hidden=\"true\">ㄉㄞˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span> 3 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span>", "<span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">共</span><span class=\"b\" aria-hidden=\"true\">ㄍㄨㄥˋ</span></span><span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 3 <span class=\"zy\"><span class=\"c\">個</span><span class=\"b\" aria-hidden=\"true\">ㄍㄜˋ</span></span><span class=\"zy\"><span class=\"c\">橘</span><span class=\"b\" aria-hidden=\"true\">ㄐㄩˊ</span></span><span class=\"zy\"><span class=\"c\">子</span><span class=\"b\" aria-hidden=\"true\">˙ㄗ</span></span>"]}, {"id": "T6", "skill": "E", "type": "eq", "expr": ["8 × ", 0, " = 32，34 − 32 = ", 1, "\n", "所以 34 ÷ 8 = ", 2, " … ", 3], "stem": "有 34 張貼紙，每人分 8 張，最多可以分給幾人？剩下幾張？用乘法找答案，再用除法算式記下來。", "blanks": [{"ans": 4, "diag": {"5": "8×5=40 不是 32"}}, {"ans": 2, "diag": {"3": "減法算錯"}}, {"ans": 4, "diag": {"2": "把商和餘數寫反", "5": "商算錯"}}, {"ans": 2, "diag": {"4": "把商和餘數寫反", "10": "餘數比除數大"}}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 34 <span class=\"zy\"><span class=\"c\">張</span><span class=\"b\" aria-hidden=\"true\">ㄓㄤ</span></span><span class=\"zy\"><span class=\"c\">貼</span><span class=\"b\" aria-hidden=\"true\">ㄊㄧㄝ</span></span><span class=\"zy\"><span class=\"c\">紙</span><span class=\"b\" aria-hidden=\"true\">ㄓˇ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span> 8 <span class=\"zy\"><span class=\"c\">張</span><span class=\"b\" aria-hidden=\"true\">ㄓㄤ</span></span>，<span class=\"zy\"><span class=\"c\">最</span><span class=\"b\" aria-hidden=\"true\">ㄗㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">多</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">分</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣ</span></span><span class=\"zy\"><span class=\"c\">給</span><span class=\"b\" aria-hidden=\"true\">ㄍㄟˇ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">人</span><span class=\"b\" aria-hidden=\"true\">ㄖㄣˊ</span></span>？<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">張</span><span class=\"b\" aria-hidden=\"true\">ㄓㄤ</span></span>？<span class=\"zy\"><span class=\"c\">用</span><span class=\"b\" aria-hidden=\"true\">ㄩㄥˋ</span></span><span class=\"zy\"><span class=\"c\">乘</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span><span class=\"zy\"><span class=\"c\">法</span><span class=\"b\" aria-hidden=\"true\">ㄈㄚˇ</span></span><span class=\"zy\"><span class=\"c\">找</span><span class=\"b\" aria-hidden=\"true\">ㄓㄠˇ</span></span><span class=\"zy\"><span class=\"c\">答</span><span class=\"b\" aria-hidden=\"true\">ㄉㄚˊ</span></span><span class=\"zy\"><span class=\"c\">案</span><span class=\"b\" aria-hidden=\"true\">ㄢˋ</span></span>，<span class=\"zy\"><span class=\"c\">再</span><span class=\"b\" aria-hidden=\"true\">ㄗㄞˋ</span></span><span class=\"zy\"><span class=\"c\">用</span><span class=\"b\" aria-hidden=\"true\">ㄩㄥˋ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">法</span><span class=\"b\" aria-hidden=\"true\">ㄈㄚˇ</span></span><span class=\"zy\"><span class=\"c\">算</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄢˋ</span></span><span class=\"zy\"><span class=\"c\">式</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span><span class=\"zy\"><span class=\"c\">記</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">來</span><span class=\"b\" aria-hidden=\"true\">ㄌㄞˊ</span></span>。", "say": "有 34 張貼紙，每人分 8 張，最多可以分給幾人？剩下幾張？用乘法找答案，再用除法算式記下來。", "exprH": ["8 × ", 0, " = 32，34 − 32 = ", 1, "\n", "<span class=\"zy\"><span class=\"c\">所</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄛˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span> 34 ÷ 8 = ", 2, " … ", 3]}, {"id": "T7", "skill": "D", "type": "num", "stem": "媽媽烤了 38 塊餅乾，每 9 塊裝成 1 盒，最多可以裝滿幾盒？剩下幾塊？", "blanks": [{"pre": "裝滿", "post": "盒", "ans": 4, "diag": {"5": "9×5=45 比 38 多，裝不滿 5 盒", "3": "少裝一盒"}, "preH": "<span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">滿</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˇ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>"}, {"pre": "剩下", "post": "塊", "ans": 2, "diag": {"11": "剩下的比 9 多，還能再裝一盒", "7": "用 45−38 算成不夠的數"}, "preH": "<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">塊</span><span class=\"b\" aria-hidden=\"true\">ㄎㄨㄞˋ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">媽</span><span class=\"b\" aria-hidden=\"true\">ㄇㄚ</span></span><span class=\"zy\"><span class=\"c\">媽</span><span class=\"b\" aria-hidden=\"true\">ㄇㄚ</span></span><span class=\"zy\"><span class=\"c\">烤</span><span class=\"b\" aria-hidden=\"true\">ㄎㄠˇ</span></span><span class=\"zy\"><span class=\"c\">了</span><span class=\"b\" aria-hidden=\"true\">˙ㄌㄜ</span></span> 38 <span class=\"zy\"><span class=\"c\">塊</span><span class=\"b\" aria-hidden=\"true\">ㄎㄨㄞˋ</span></span><span class=\"zy\"><span class=\"c\">餅</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧㄥˇ</span></span><span class=\"zy\"><span class=\"c\">乾</span><span class=\"b\" aria-hidden=\"true\">ㄍㄢ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 9 <span class=\"zy\"><span class=\"c\">塊</span><span class=\"b\" aria-hidden=\"true\">ㄎㄨㄞˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>，<span class=\"zy\"><span class=\"c\">最</span><span class=\"b\" aria-hidden=\"true\">ㄗㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">多</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄛ</span></span><span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">滿</span><span class=\"b\" aria-hidden=\"true\">ㄇㄢˇ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">盒</span><span class=\"b\" aria-hidden=\"true\">ㄏㄜˊ</span></span>？<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">塊</span><span class=\"b\" aria-hidden=\"true\">ㄎㄨㄞˋ</span></span>？", "say": "媽媽烤了 38 塊餅乾，每 9 塊裝成 1 盒，最多可以裝滿幾盒？剩下幾塊？"}, {"id": "T8", "skill": "F", "type": "mc", "stem": "小明算「31 ÷ 6 = 4 … 7」。他算得對嗎？", "opts": ["不對，餘數 7 比除數 6 大，還能再裝一份", "對，因為 6 × 4 + 7 = 31", "不對，商應該是 3", "不對，餘數一定要是 0"], "ans": 0, "diag": {"1": "只驗算總數，沒注意餘數要比除數小", "2": "往錯的方向修正商", "3": "以為除法一定要分完"}, "stemH": "<span class=\"zy\"><span class=\"c\">小</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄠˇ</span></span><span class=\"zy\"><span class=\"c\">明</span><span class=\"b\" aria-hidden=\"true\">ㄇㄧㄥˊ</span></span><span class=\"zy\"><span class=\"c\">算</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄢˋ</span></span>「31 ÷ 6 = 4 … 7」。<span class=\"zy\"><span class=\"c\">他</span><span class=\"b\" aria-hidden=\"true\">ㄊㄚ</span></span><span class=\"zy\"><span class=\"c\">算</span><span class=\"b\" aria-hidden=\"true\">ㄙㄨㄢˋ</span></span><span class=\"zy\"><span class=\"c\">得</span><span class=\"b\" aria-hidden=\"true\">˙ㄉㄜ</span></span><span class=\"zy\"><span class=\"c\">對</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄟˋ</span></span><span class=\"zy\"><span class=\"c\">嗎</span><span class=\"b\" aria-hidden=\"true\">˙ㄇㄚ</span></span>？", "say": "小明算「31 除以 6 = 4 餘 7」。他算得對嗎？。第1個，不對，餘數 7 比除數 6 大，還能再裝一份。第2個，對，因為 6 乘以 4 + 7 = 31。第3個，不對，商應該是 3。第4個，不對，餘數一定要是 0", "optsH": ["<span class=\"zy\"><span class=\"c\">不</span><span class=\"b\" aria-hidden=\"true\">ㄅㄨˋ</span></span><span class=\"zy\"><span class=\"c\">對</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄟˋ</span></span>，<span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">數</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span> 7 <span class=\"zy\"><span class=\"c\">比</span><span class=\"b\" aria-hidden=\"true\">ㄅㄧˇ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">數</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span> 6 <span class=\"zy\"><span class=\"c\">大</span><span class=\"b\" aria-hidden=\"true\">ㄉㄚˋ</span></span>，<span class=\"zy\"><span class=\"c\">還</span><span class=\"b\" aria-hidden=\"true\">ㄏㄞˊ</span></span><span class=\"zy\"><span class=\"c\">能</span><span class=\"b\" aria-hidden=\"true\">ㄋㄥˊ</span></span><span class=\"zy\"><span class=\"c\">再</span><span class=\"b\" aria-hidden=\"true\">ㄗㄞˋ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">份</span><span class=\"b\" aria-hidden=\"true\">ㄈㄣˋ</span></span>", "<span class=\"zy\"><span class=\"c\">對</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄟˋ</span></span>，<span class=\"zy\"><span class=\"c\">因</span><span class=\"b\" aria-hidden=\"true\">ㄧㄣ</span></span><span class=\"zy\"><span class=\"c\">為</span><span class=\"b\" aria-hidden=\"true\">ㄨㄟˋ</span></span> 6 × 4 + 7 = 31", "<span class=\"zy\"><span class=\"c\">不</span><span class=\"b\" aria-hidden=\"true\">ㄅㄨˋ</span></span><span class=\"zy\"><span class=\"c\">對</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄟˋ</span></span>，<span class=\"zy\"><span class=\"c\">商</span><span class=\"b\" aria-hidden=\"true\">ㄕㄤ</span></span><span class=\"zy\"><span class=\"c\">應</span><span class=\"b\" aria-hidden=\"true\">ㄧㄥ</span></span><span class=\"zy\"><span class=\"c\">該</span><span class=\"b\" aria-hidden=\"true\">ㄍㄞ</span></span><span class=\"zy\"><span class=\"c\">是</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span> 3", "<span class=\"zy\"><span class=\"c\">不</span><span class=\"b\" aria-hidden=\"true\">ㄅㄨˋ</span></span><span class=\"zy\"><span class=\"c\">對</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨㄟˋ</span></span>，<span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">數</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span><span class=\"zy\"><span class=\"c\">一</span><span class=\"b\" aria-hidden=\"true\">ㄧ</span></span><span class=\"zy\"><span class=\"c\">定</span><span class=\"b\" aria-hidden=\"true\">ㄉㄧㄥˋ</span></span><span class=\"zy\"><span class=\"c\">要</span><span class=\"b\" aria-hidden=\"true\">ㄧㄠˋ</span></span><span class=\"zy\"><span class=\"c\">是</span><span class=\"b\" aria-hidden=\"true\">ㄕˋ</span></span> 0"]}, {"id": "T9", "skill": "F", "type": "num", "stem": "有 32 顆湯圓，每 8 顆裝成 1 碗，可以裝成幾碗？剩下幾顆？", "blanks": [{"pre": "裝成", "post": "碗", "ans": 4, "diag": {"3": "少裝一碗", "24": "只減一次 32−8"}, "preH": "<span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">碗</span><span class=\"b\" aria-hidden=\"true\">ㄨㄢˇ</span></span>"}, {"pre": "剩下", "post": "顆", "ans": 0, "diag": {"8": "剛好裝完時剩下 0 顆，餘數是 0"}, "preH": "<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span>", "postH": "<span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span>"}], "stemH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span> 32 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">湯</span><span class=\"b\" aria-hidden=\"true\">ㄊㄤ</span></span><span class=\"zy\"><span class=\"c\">圓</span><span class=\"b\" aria-hidden=\"true\">ㄩㄢˊ</span></span>，<span class=\"zy\"><span class=\"c\">每</span><span class=\"b\" aria-hidden=\"true\">ㄇㄟˇ</span></span> 8 <span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span> 1 <span class=\"zy\"><span class=\"c\">碗</span><span class=\"b\" aria-hidden=\"true\">ㄨㄢˇ</span></span>，<span class=\"zy\"><span class=\"c\">可</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜˇ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">裝</span><span class=\"b\" aria-hidden=\"true\">ㄓㄨㄤ</span></span><span class=\"zy\"><span class=\"c\">成</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">碗</span><span class=\"b\" aria-hidden=\"true\">ㄨㄢˇ</span></span>？<span class=\"zy\"><span class=\"c\">剩</span><span class=\"b\" aria-hidden=\"true\">ㄕㄥˋ</span></span><span class=\"zy\"><span class=\"c\">下</span><span class=\"b\" aria-hidden=\"true\">ㄒㄧㄚˋ</span></span><span class=\"zy\"><span class=\"c\">幾</span><span class=\"b\" aria-hidden=\"true\">ㄐㄧˇ</span></span><span class=\"zy\"><span class=\"c\">顆</span><span class=\"b\" aria-hidden=\"true\">ㄎㄜ</span></span>？", "say": "有 32 顆湯圓，每 8 顆裝成 1 碗，可以裝成幾碗？剩下幾顆？"}, {"id": "T10", "skill": "G", "type": "mc", "stem": "「17 ÷ 5 = 3 … 2」要怎麼讀？", "opts": ["十七除以五等於三餘二", "五除以十七等於三餘二", "十七乘以五等於三餘二", "十七除以五等於二餘三"], "ans": 0, "diag": {"1": "被除數和除數的順序讀反", "2": "把除號讀成乘", "3": "商和餘數讀反"}, "stemH": "「17 ÷ 5 = 3 … 2」<span class=\"zy\"><span class=\"c\">要</span><span class=\"b\" aria-hidden=\"true\">ㄧㄠˋ</span></span><span class=\"zy\"><span class=\"c\">怎</span><span class=\"b\" aria-hidden=\"true\">ㄗㄣˇ</span></span><span class=\"zy\"><span class=\"c\">麼</span><span class=\"b\" aria-hidden=\"true\">˙ㄇㄜ</span></span><span class=\"zy\"><span class=\"c\">讀</span><span class=\"b\" aria-hidden=\"true\">ㄉㄨˊ</span></span>？", "say": "「17 除以 5 = 3 餘 2」要怎麼讀？。第1個，十七除以五等於三餘二。第2個，五除以十七等於三餘二。第3個，十七乘以五等於三餘二。第4個，十七除以五等於二餘三", "optsH": ["<span class=\"zy\"><span class=\"c\">十</span><span class=\"b\" aria-hidden=\"true\">ㄕˊ</span></span><span class=\"zy\"><span class=\"c\">七</span><span class=\"b\" aria-hidden=\"true\">ㄑㄧ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">五</span><span class=\"b\" aria-hidden=\"true\">ㄨˇ</span></span><span class=\"zy\"><span class=\"c\">等</span><span class=\"b\" aria-hidden=\"true\">ㄉㄥˇ</span></span><span class=\"zy\"><span class=\"c\">於</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">三</span><span class=\"b\" aria-hidden=\"true\">ㄙㄢ</span></span><span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">二</span><span class=\"b\" aria-hidden=\"true\">ㄦˋ</span></span>", "<span class=\"zy\"><span class=\"c\">五</span><span class=\"b\" aria-hidden=\"true\">ㄨˇ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">十</span><span class=\"b\" aria-hidden=\"true\">ㄕˊ</span></span><span class=\"zy\"><span class=\"c\">七</span><span class=\"b\" aria-hidden=\"true\">ㄑㄧ</span></span><span class=\"zy\"><span class=\"c\">等</span><span class=\"b\" aria-hidden=\"true\">ㄉㄥˇ</span></span><span class=\"zy\"><span class=\"c\">於</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">三</span><span class=\"b\" aria-hidden=\"true\">ㄙㄢ</span></span><span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">二</span><span class=\"b\" aria-hidden=\"true\">ㄦˋ</span></span>", "<span class=\"zy\"><span class=\"c\">十</span><span class=\"b\" aria-hidden=\"true\">ㄕˊ</span></span><span class=\"zy\"><span class=\"c\">七</span><span class=\"b\" aria-hidden=\"true\">ㄑㄧ</span></span><span class=\"zy\"><span class=\"c\">乘</span><span class=\"b\" aria-hidden=\"true\">ㄔㄥˊ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">五</span><span class=\"b\" aria-hidden=\"true\">ㄨˇ</span></span><span class=\"zy\"><span class=\"c\">等</span><span class=\"b\" aria-hidden=\"true\">ㄉㄥˇ</span></span><span class=\"zy\"><span class=\"c\">於</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">三</span><span class=\"b\" aria-hidden=\"true\">ㄙㄢ</span></span><span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">二</span><span class=\"b\" aria-hidden=\"true\">ㄦˋ</span></span>", "<span class=\"zy\"><span class=\"c\">十</span><span class=\"b\" aria-hidden=\"true\">ㄕˊ</span></span><span class=\"zy\"><span class=\"c\">七</span><span class=\"b\" aria-hidden=\"true\">ㄑㄧ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">以</span><span class=\"b\" aria-hidden=\"true\">ㄧˇ</span></span><span class=\"zy\"><span class=\"c\">五</span><span class=\"b\" aria-hidden=\"true\">ㄨˇ</span></span><span class=\"zy\"><span class=\"c\">等</span><span class=\"b\" aria-hidden=\"true\">ㄉㄥˇ</span></span><span class=\"zy\"><span class=\"c\">於</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">二</span><span class=\"b\" aria-hidden=\"true\">ㄦˋ</span></span><span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">三</span><span class=\"b\" aria-hidden=\"true\">ㄙㄢ</span></span>"]}], "titleH": "<span class=\"zy\"><span class=\"c\">有</span><span class=\"b\" aria-hidden=\"true\">ㄧㄡˇ</span></span><span class=\"zy\"><span class=\"c\">餘</span><span class=\"b\" aria-hidden=\"true\">ㄩˊ</span></span><span class=\"zy\"><span class=\"c\">數</span><span class=\"b\" aria-hidden=\"true\">ㄕㄨˋ</span></span><span class=\"zy\"><span class=\"c\">的</span><span class=\"b\" aria-hidden=\"true\">˙ㄉㄜ</span></span><span class=\"zy\"><span class=\"c\">除</span><span class=\"b\" aria-hidden=\"true\">ㄔㄨˊ</span></span><span class=\"zy\"><span class=\"c\">法</span><span class=\"b\" aria-hidden=\"true\">ㄈㄚˇ</span></span>"}};
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem('quiz.'+k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('quiz.'+k, JSON.stringify(v)); }catch(e){} }
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\s+/g,'').trim();
+
+let S = {
+  view:'start', test:null, cls: LS.get('cls',''), seat:'', name:'', answers:{}, idx:0, t0:0, preview:false,
+  openItem:null, zhuyin: LS.get('zhuyin', false), result:null, saveState:null, roster: LS.get('roster', []), manual:false, fullRoster:[],
+  // teacher
+  authed:false, teacherEmail:'', loginErr:'', loginBusy:false, tTab:'post', tCls:'全部', selKey:null, records:[], dbLoaded:false, dbSlow:false, delId:null, loadErr:''
+};
+let dbState = 'connecting', sb = null, channel = null;
+// 網址容錯：自動去掉多貼的 /rest/v1、結尾斜線與空白
+const SB_BASE = (SUPABASE_URL.trim().match(/^https:\/\/[a-z0-9-]+\.supabase\.co/i) || [''])[0];
+const SB_KEY = SUPABASE_ANON_KEY.trim();
+const CFG_OK = !!SB_BASE && SB_KEY.length > 30 && !/貼上/.test(SB_KEY);
+const REST = SB_BASE + '/rest/v1/results';
+
+/* ---------------- cloud ---------------- */
+function newId(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,10); }
+
+async function postRecord(rec){
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 12000);
+  try {
+    const res = await fetch(REST, {method:'POST', signal:ctl.signal,
+      headers:{'apikey':SB_KEY, 'Content-Type':'application/json', 'Prefer':'return=minimal'},
+      body: JSON.stringify(rec)});
+    if (res.ok || res.status === 409) return 'ok';           // 409 = 已經存過（重送）
+    if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) return 'reject';
+    return 'retry';
+  } catch(e){ return 'retry'; } finally { clearTimeout(tm); }
+}
+async function saveRecord(rec){
+  rec.client_id = newId();
+  if (CFG_OK && navigator.onLine !== false){
+    const r = await postRecord(rec);
+    if (r === 'ok'){ dbState = 'on'; return 'cloud'; }
+    if (r === 'reject'){ console.error('Supabase 拒絕這筆資料', rec); }
+  }
+  const pend = LS.get('pending', []); pend.push(rec); LS.set('pending', pend);
+  return 'local';
+}
+let flushing = false;
+async function flushPending(){
+  if (!CFG_OK || flushing) return;
+  const pend = LS.get('pending', []); if (!pend.length) return;
+  flushing = true; const left = [];
+  for (const r of pend){ const x = await postRecord(r); if (x === 'retry') left.push(r); else if (x === 'ok') dbState = 'on'; }
+  // 先讀最新暫存，避免期間新增的被蓋掉
+  const now = LS.get('pending', []); const sent = new Set(pend.filter(r => !left.includes(r)).map(r => r.client_id));
+  LS.set('pending', now.filter(r => !sent.has(r.client_id)));
+  flushing = false;
+  if (S.view === 'start' || S.view === 'teacher') render();
+}
+// 連線檢查：只做輕量的 HEAD 請求確認 Supabase 有回應
+(async () => {
+  if (!CFG_OK){ dbState = 'nocfg'; render(); return; }
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(REST + '?select=id&limit=0', {method:'HEAD', signal:ctl.signal, headers:{'apikey':SB_KEY}});
+    dbState = r.status < 500 ? 'on' : 'off';
+  } catch(e){ dbState = 'off'; }
+  render(); flushPending(); loadRoster();
+})();
+async function loadRoster(){
+  if (!CFG_OK) return;
+  try {
+    const r = await fetch(SB_BASE + '/rest/v1/rpc/roster_public', {method:'POST', headers:{'apikey':SB_KEY,'Content-Type':'application/json'}, body:'{}'});
+    if (!r.ok) return;
+    const data = await r.json();
+    if (Array.isArray(data)){ S.roster = data; LS.set('roster', data);
+      const cl = [...new Set(data.map(x=>x.cls))]; if (!S.cls && cl.length === 1) S.cls = cl[0];
+      if (S.view === 'start' && !(document.activeElement && document.activeElement.matches('input'))) render(); }
+  } catch(e){}
+}
+window.addEventListener('online', flushPending);
+setInterval(flushPending, 60000);
+
+function loadSupabaseLib(){
+  return new Promise((ok, bad) => {
+    if (window.supabase && window.supabase.createClient) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js';
+    sc.onload = ok; sc.onerror = () => bad(new Error('lib'));
+    document.head.appendChild(sc);
+  });
+}
+async function getClient(){
+  if (sb) return sb;
+  await loadSupabaseLib();
+  sb = window.supabase.createClient(SB_BASE, SB_KEY, {auth:{persistSession:true, storageKey:'quiz-teacher'}});
+  return sb;
+}
+
+/* ---------------- grading ---------------- */
+function grade(test, answers){
+  const items = test.items.map(q => {
+    const a = answers[q.id];
+    if (q.type === 'mc'){
+      const ok = a === q.ans;
+      const diag = (!ok && a != null && q.diag) ? (q.diag[String(a)] || '') : '';
+      return {id:q.id, skill:q.skill, ok, given:[a == null ? '' : String.fromCharCode(65+a)], diag: a == null ? '未作答' : diag};
+    }
+    const given = q.blanks.map((b,k) => norm(a && a[k]));
+    const oks = q.blanks.map((b,k) => given[k] !== '' && Number(given[k]) === b.ans);
+    const ok = oks.every(Boolean);
+    let diag = '';
+    if (!ok){
+      if (given.every(g => g === '')) diag = '未作答';
+      else diag = q.blanks.map((b,k) => (!oks[k] && b.diag && b.diag[given[k]]) || '').filter(Boolean).join('；');
+    }
+    return {id:q.id, skill:q.skill, ok, given, diag};
+  });
+  const correct = items.filter(i => i.ok).length;
+  return {items, correct, total: items.length, score: Math.round(correct / items.length * 100)};
+}
+
+/* ---------------- speech ---------------- */
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-TW'; u.rate = .85;
+    const v = speechSynthesis.getVoices().find(v => /zh[-_]TW/i.test(v.lang));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+
+/* ---------------- render ---------------- */
+function render(){
+  document.documentElement.classList.toggle('zhuyin', !!S.zhuyin);
+  const app = $('#app');
+  app.classList.toggle('wide', S.view === 'teacher');
+  const v = {start:vStart, quiz:vQuiz, review:vReview, done:vDone, pin:vPin, teacher:vTeacher}[S.view];
+  app.innerHTML = v();
+  bind();
+}
+
+function zhuyinSwitch(){
+  return `<label class="switch"><input type="checkbox" id="zyToggle" ${S.zhuyin?'checked':''}> 顯示注音</label>`;
+}
+function cloudNote(){
+  const pend = LS.get('pending', []).length;
+  if (dbState === 'nocfg') return `<div class="notice bad">尚未設定 Supabase（請老師在網頁檔案最上方填入網址與金鑰）。現在的作答只會存在這台裝置。</div>`;
+  if (dbState === 'off') return `<div class="notice warn">目前連不上網路，作答結果會先存在這台裝置${pend?`（已暫存 ${pend} 份）`:''}，連上網路後會自動送出。</div>`;
+  if (pend) return `<div class="notice warn">這台裝置還有 ${pend} 份作答等待送出。</div>`;
+  return '';
+}
+function whoBlock(){
+  const classes = [...new Set(S.roster.map(r=>r.cls))];
+  if (classes.length && !S.manual){
+    const list = S.roster.filter(r=>r.cls===S.cls);
+    return `<div class="card" style="display:flex;flex-direction:column;gap:14px">
+      <div class="row"><b>班級</b><div class="chips">${classes.map(c=>`<button class="chip" data-cls="${esc(c)}" aria-pressed="${c===S.cls}">${esc(c)}</button>`).join('')}</div></div>
+      ${S.cls && list.length ? `<div><b>點你的座號和名字</b></div>
+      <div class="names">${list.map(r=>`<button class="nm" data-seat="${r.seat}" data-masked="${esc(r.masked)}" aria-pressed="${String(r.seat)===String(S.seat)}"><b>${r.seat}</b><span>${esc(r.masked)}</span></button>`).join('')}</div>` : `<div class="muted">先點你的班級。</div>`}
+      <div><button class="btn ghost small" id="manual">名單裡找不到我</button></div>
+    </div>`;
+  }
+  return `<div class="card">
+    <div class="who">
+      <label class="f full">班級<input class="inp" id="cls" list="clsList" placeholder="例如：三年丙班" value="${esc(S.cls)}" autocomplete="off"></label>
+      <label class="f">座號<input class="inp" id="seat" inputmode="numeric" maxlength="2" placeholder="1" value="${esc(S.seat)}" autocomplete="off"></label>
+      <label class="f">名字<input class="inp" id="name" placeholder="你的名字" value="${esc(S.name)}" autocomplete="off"></label>
+    </div>
+    <datalist id="clsList">${[...new Set(['三年甲班','三年乙班','三年丙班','三年丁班', ...classes])].map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+    ${classes.length ? '<div style="margin-top:10px"><button class="btn ghost small" id="useList">改用名單選名字</button></div>' : ''}
+  </div>`;
+}
+function vStart(){
+  const sel = S.test;
+  const card = (t, eq) => `
+    <button class="tcard" data-test="${t.id}" aria-pressed="${sel===t.id}">
+      <span class="tag">${t.name}</span>
+      <span class="tt">${t.titleH}</span>
+      <span class="muted small">${esc(t.sub)}・${t.items.length} 題</span>
+      <span class="eq">${eq}</span>
+    </button>`;
+  const ready = S.test && S.cls.trim() && S.seat && S.name.trim();
+  return `
+  <div class="brand"><span class="mark">新埔國小・三年級數學</span><span class="spacer"></span>${zhuyinSwitch()}</div>
+  <h1>除法小測站</h1>
+  <p class="muted" style="margin:0">先選要做的測驗，再點你的班級和名字，就可以開始。</p>
+  <div class="tests">
+    ${card(DATA.pre, '12 ÷ 4 = 3')}
+    ${card(DATA.post, '25 ÷ 8 = 3 … 1')}
+  </div>
+  ${whoBlock()}
+  ${cloudNote()}
+  <div class="row"><button class="btn primary big" id="go" ${ready?'':'disabled'}>開始作答</button>
+    <span class="muted small">${ready ? '' : '還沒選測驗或還沒選名字'}</span></div>
+  <footer><button class="btn ghost" id="toTeacher">教師專區</button></footer>`;
+}
+
+function curTest(){ return DATA[S.test]; }
+function isAnswered(q){
+  const a = S.answers[q.id];
+  if (q.type === 'mc') return a != null;
+  return !!a && q.blanks.every((b,k) => norm(a[k]) !== '');
+}
+function nin(q, k, label){
+  const a = S.answers[q.id] || [];
+  return `<input class="nin" id="b-${q.id}-${k}" data-q="${q.id}" data-k="${k}" inputmode="numeric" autocomplete="off" aria-label="${esc(label||'答案')}" value="${esc(a[k]||'')}">`;
+}
+function qBody(q, pv){
+  // pv = 教師預覽：{counts:{A:3,...}}，空格直接顯示正確答案
+  const box = (k, label) => pv ? `<input class="nin ansbox" value="${q.blanks[k].ans}" disabled aria-label="${esc(label||'正確答案')}">` : nin(q, k, label);
+  let body = '';
+  if (q.pic) body += `<div class="pic" aria-label="${q.pic[1]} 個">${Array(q.pic[1]).fill(`<span>${q.pic[0]}</span>`).join('')}</div>`;
+  if (q.type === 'num'){
+    body += `<div class="blanks">${q.blanks.map((b,k)=>`<div class="bl">${b.preH} ${box(k,b.pre)} ${b.postH}</div>`).join('')}</div>`;
+  } else if (q.type === 'eq'){
+    body += `<div class="eqline">${q.exprH.map(x => typeof x === 'number' ? box(x) : x === '\n' ? '<span style="flex-basis:100%;height:0"></span>' : `<span>${x}</span>`).join('')}</div>`;
+  } else if (q.type === 'long'){
+    body += `<div class="ld" role="group" aria-label="直式">
+      <span></span><div class="cell">${box(0,'商')}</div><span class="lbl">商</span>
+      <span class="dv">${q.divisor}</span><div class="nb">${q.dividend}</div><span></span>
+      <span></span><div class="cell">${box(1,'8 × 商')}</div><span class="lbl">${q.divisor} × 商</span>
+      <span></span><div class="rule"></div><span></span>
+      <span></span><div class="cell">${box(2,'餘數')}</div><span class="lbl">餘數</span>
+    </div>`;
+  } else if (q.type === 'mc'){
+    if (pv){
+      body += `<div class="opts">${q.optsH.map((o,i)=>{ const L='ABCD'[i], n=(pv.counts||{})[L]||0;
+        return `<div class="opt ${i===q.ans?'right':''}"><span class="k">${L}</span><span style="flex:1">${o}</span><span class="pill ${i===q.ans?'good':(n?'bad':'plain')}">${i===q.ans?'正確・':''}${n} 人</span></div>`; }).join('')}</div>`;
+    } else {
+      const a = S.answers[q.id];
+      body += `<div class="opts" role="radiogroup">${q.optsH.map((o,i)=>`<button class="opt" role="radio" data-opt="${i}" aria-checked="${a===i}"><span class="k">${'ABCD'[i]}</span><span>${o}</span></button>`).join('')}</div>`;
+    }
+  }
+  return body;
+}
+function vQuiz(){
+  const t = curTest(), q = t.items[S.idx], n = t.items.length;
+  const body = qBody(q);
+  return `
+  <div class="qhead">
+    <span class="pill plain">${t.name}${S.preview?'・預覽':''}</span>
+    <span class="muted small">${esc(S.cls)} ${esc(S.seat)} 號 ${esc(S.name)}</span>
+    <span class="spacer"></span>${zhuyinSwitch()}
+  </div>
+  <div class="dots" aria-label="題目進度">${t.items.map((x,i)=>`<button class="dot ${isAnswered(x)?'done':''} ${i===S.idx?'cur':''}" data-go="${i}" aria-label="第 ${i+1} 題">${i+1}</button>`).join('')}</div>
+  <section class="card qcard">
+    <div class="row"><span class="qno">第 ${S.idx+1} 題 / 共 ${n} 題</span><span class="spacer"></span>
+      <button class="btn say" id="say">${SPK}唸題目</button></div>
+    <div class="stem">${q.stemH}</div>
+    ${body}
+  </section>
+  <div class="qnav">
+    <button class="btn" id="prev" ${S.idx===0?'disabled':''}>上一題</button>
+    <span class="spacer"></span>
+    ${S.idx < n-1 ? `<button class="btn primary" id="next">下一題</button>` : `<button class="btn primary" id="toReview">檢查並交卷</button>`}
+  </div>`;
+}
+
+function vReview(){
+  const t = curTest();
+  const miss = t.items.map((q,i)=>[q,i]).filter(([q])=>!isAnswered(q));
+  return `
+  <h2>交卷前檢查</h2>
+  <div class="dots">${t.items.map((x,i)=>`<button class="dot ${isAnswered(x)?'done':''}" data-go="${i}" aria-label="回到第 ${i+1} 題">${i+1}</button>`).join('')}</div>
+  <div class="card">
+    ${miss.length ? `<p style="margin-top:0">還有 <b>${miss.length}</b> 題沒有寫完：第 ${miss.map(([,i])=>i+1).join('、')} 題。點上面的號碼可以回去寫。</p>`
+                  : `<p style="margin-top:0">全部都寫完了！確定要交卷嗎？</p>`}
+    <div class="row"><button class="btn" data-go="${t.items.length-1}">回去檢查</button>
+    <button class="btn primary big" id="submit">${miss.length ? '還是要交卷' : '確定交卷'}</button></div>
+  </div>`;
+}
+
+function vDone(){
+  const r = S.result, t = curTest();
+  const st = S.preview ? `<div class="notice warn">預覽模式：這次作答不會被記錄。</div>`
+    : S.saveState === 'saving' ? `<div class="notice warn">正在送出…</div>`
+    : S.saveState === 'cloud' ? `<div class="notice good">已經送給老師了。</div>`
+    : `<div class="notice warn">先存在這台裝置，連上網路後會自動送給老師。</div>`;
+  return `
+  <h2>${esc(S.name)}，你完成${t.name}了！</h2>
+  <div class="card" style="display:flex;flex-direction:column;gap:16px">
+    <div class="score"><span>答對</span><b>${r.correct}</b><span>/ ${r.total} 題</span></div>
+    <div class="marks">${r.items.map((it,i)=>`<div class="mk ${it.ok?'ok':'no'}">第${i+1}題<br>${it.ok?'✓':'再想想'}</div>`).join('')}</div>
+    ${st}
+  </div>
+  <div class="row"><button class="btn primary big" id="nextKid">換下一位同學</button>${S.preview?'<button class="btn" id="backTeacher">回教師專區</button>':''}</div>`;
+}
+
+/* ---------------- teacher ---------------- */
+function vPin(){
+  return `
+  <h2>教師專區登入</h2>
+  <form class="card" id="loginForm" style="display:flex;flex-direction:column;gap:12px;max-width:420px">
+    <label class="f">Email<input class="inp" id="lEmail" type="email" autocomplete="username" value="${esc(S.teacherEmail)}"></label>
+    <label class="f">密碼<input class="inp" id="lPass" type="password" autocomplete="current-password"></label>
+    ${S.loginErr?`<div class="notice bad">${esc(S.loginErr)}</div>`:''}
+    <div class="row"><button class="btn primary" type="submit" ${S.loginBusy?'disabled':''}>${S.loginBusy?'登入中…':'登入'}</button><button class="btn ghost" type="button" id="toStart">回作答畫面</button></div>
+    <p class="muted small" style="margin:0">帳號在 Supabase 後台的 Authentication 建立，並且要列在教師名單裡。</p>
+  </form>`;
+}
+function allRecords(){
+  const local = LS.get('pending', []).map(r => ({...r, id:r.client_id, _local:true}));
+  return [...S.records, ...local];
+}
+function latestMap(recs){
+  const m = new Map();
+  for (const r of recs){
+    if (S.tCls !== '全部' && r.cls !== S.tCls) continue;
+    const key = r.test + '|' + r.cls + '|' + r.seat;
+    if (!m.has(key) || m.get(key).ts < r.ts) m.set(key, r);
+  }
+  return m;
+}
+function rosterName(cls, seat){ const r = S.fullRoster.find(x => x.cls === cls && Number(x.seat) === Number(seat)); return r ? r.name : null; }
+function students(m){
+  const s = new Map();
+  for (const r of m.values()){
+    const key = r.cls + '|' + r.seat;
+    if (!s.has(key)) s.set(key, {key, cls:r.cls, seat:r.seat, name:r.name, pre:null, post:null});
+    const o = s.get(key); o[r.test] = r; if (r.ts >= (o._ts||0)){ o.name = r.name; o._ts = r.ts; }
+  }
+  // 名單上還沒作答的學生也列出來
+  for (const r of S.fullRoster){
+    if (S.tCls !== '全部' && r.cls !== S.tCls) continue;
+    const key = r.cls + '|' + r.seat;
+    if (!s.has(key)) s.set(key, {key, cls:r.cls, seat:Number(r.seat), name:r.name, pre:null, post:null});
+  }
+  for (const o of s.values()){ const n = rosterName(o.cls, o.seat); if (n) o.name = n; }
+  return [...s.values()].sort((a,b) => a.cls.localeCompare(b.cls,'zh-Hant') || a.seat - b.seat);
+}
+const avg = a => a.length ? Math.round(a.reduce((x,y)=>x+y,0)/a.length) : null;
+const sc = r => r ? r.score : null;
+function barCls(p){ return p >= 80 ? 'g' : p >= 60 ? 'w' : 'r'; }
+
+function vTeacher(){
+  const recs = allRecords();
+  const classes = ['全部', ...[...new Set([...recs.map(r=>r.cls), ...S.fullRoster.map(r=>r.cls)])].sort((a,b)=>a.localeCompare(b,'zh-Hant'))];
+  const m = latestMap(recs), st = students(m);
+  const pres = st.filter(s=>s.pre).map(s=>s.pre.score), posts = st.filter(s=>s.post).map(s=>s.post.score);
+  const both = st.filter(s=>s.pre && s.post);
+  const gain = avg(both.map(s=>s.post.score - s.pre.score));
+  const loading = S.authed && !S.dbLoaded;
+
+  const tiles = `
+  <div class="tiles">
+    <div class="tile"><div class="l">前測完成</div><div class="v">${pres.length}<span class="muted small"> 人</span></div><div class="muted small">平均 ${avg(pres) ?? '—'} 分</div></div>
+    <div class="tile"><div class="l">後測完成</div><div class="v">${posts.length}<span class="muted small"> 人</span></div><div class="muted small">平均 ${avg(posts) ?? '—'} 分</div></div>
+    <div class="tile"><div class="l">前後測都完成</div><div class="v">${both.length}<span class="muted small"> 人</span></div><div class="muted small">平均進步 ${gain==null?'—':(gain>=0?'+':'')+gain} 分</div></div>
+    <div class="tile"><div class="l">後測需補救（低於 60 分）</div><div class="v" style="color:var(--bad)">${st.filter(s=>s.post && s.post.score<60).length}<span class="muted small"> 人</span></div><div class="muted small">見下方名單標示</div></div>
+  </div>`;
+
+  const status = s => {
+    if (!s.post) return '<span class="pill plain">尚未後測</span>';
+    if (s.post.score < 60) return '<span class="pill bad">需補救</span>';
+    if (s.pre && s.post.score < s.pre.score) return '<span class="pill warn">退步</span>';
+    if (s.post.score >= 80) return '<span class="pill good">精熟</span>';
+    return '<span class="pill warn">待加強</span>';
+  };
+  const table = st.length ? `
+  <div class="tablewrap"><table>
+    <thead><tr><th>班級</th><th class="num">座號</th><th>姓名</th><th class="num">前測</th><th class="num">後測</th><th class="num">進步</th><th>狀態</th></tr></thead>
+    <tbody>${st.map(s=>{
+      const g = s.pre && s.post ? s.post.score - s.pre.score : null;
+      return `<tr class="${S.selKey===s.key?'sel':''}"><td>${esc(s.cls)}</td><td class="num">${s.seat}</td>
+      <td><button class="linkbtn" data-stu="${esc(s.key)}">${esc(s.name)}</button></td>
+      <td class="num">${sc(s.pre) ?? '—'}</td><td class="num">${sc(s.post) ?? '—'}</td>
+      <td class="num" style="color:${g==null?'var(--muted)':g>=0?'var(--good)':'var(--bad)'}">${g==null?'—':(g>=0?'+':'')+g}</td><td>${status(s)}</td></tr>`;}).join('')}
+    </tbody></table></div>`
+  : `<div class="card muted">${loading ? (S.dbSlow ? '雲端資料還沒回應，請稍候或確認網路。' : '正在讀取作答紀錄…') : '還沒有學生作答。學生交卷後，成績會即時出現在這裡。'}</div>`;
+
+  // student detail
+  let detail = '';
+  const sel = st.find(s=>s.key===S.selKey);
+  if (sel){
+    const part = (tid) => {
+      const r = sel[tid], t = DATA[tid];
+      if (!r) return `<div><h3>${t.name}</h3><p class="muted">尚未作答</p></div>`;
+      return `<div style="min-width:0"><h3>${t.name}　${r.score} 分 <span class="muted small">（${fmtTime(r.ts)}・${Math.round((r.sec||0)/60)} 分鐘）</span></h3>
+        <ul style="margin:8px 0 0;padding-left:20px">${r.items.filter(i=>!i.ok).map(i=>{
+          const q = t.items.find(x=>x.id===i.id);
+          return `<li><b>${i.id}</b> ${esc(shortStem(q))}<br><span class="muted small">學生作答：${esc(gv(i))}　正確：${esc(rightAns(q))}${i.diag?`　→ ${esc(i.diag)}`:''}</span></li>`;
+        }).join('') || '<li>全部答對</li>'}</ul></div>`;
+    };
+    detail = `<div class="card detail" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
+      <div style="grid-column:1/-1" class="row"><h2>${esc(sel.cls)} ${sel.seat} 號 ${esc(sel.name)}</h2><span class="spacer"></span><button class="btn" id="closeStu">關閉</button></div>
+      ${part('pre')}${part('post')}</div>`;
+  }
+
+  // item analysis
+  const tid = S.tTab, t = DATA[tid];
+  const rs = [...m.values()].filter(r=>r.test===tid);
+  const itemStats = t.items.map(q => {
+    const its = rs.map(r => r.items.find(i=>i.id===q.id)).filter(Boolean);
+    const ok = its.filter(i=>i.ok).length;
+    const wrongs = new Map();
+    its.filter(i=>!i.ok).forEach(i => { const k = gv(i); const w = wrongs.get(k) || {n:0, diag:i.diag}; w.n++; wrongs.set(k,w); });
+    const counts = {}; its.forEach(i => { const g = i.given[0]; if (g) counts[g] = (counts[g]||0) + 1; });
+    return {q, counts, n:its.length, rate: its.length ? Math.round(ok/its.length*100) : null, wrongs:[...wrongs.entries()].sort((a,b)=>b[1].n-a[1].n).slice(0,4)};
+  });
+  const skills = Object.entries(t.skills).map(([k,label]) => {
+    const st2 = itemStats.filter(s=>s.q.skill===k && s.rate!=null);
+    return {k, label, rate: st2.length ? Math.round(st2.reduce((a,s)=>a+s.rate,0)/st2.length) : null, ids: t.items.filter(q=>q.skill===k).map(q=>q.id).join('、')};
+  });
+  const analysis = `
+  <div class="row"><h2>題目分析</h2><span class="spacer"></span>
+    <div class="tabs" role="tablist">${['pre','post'].map(x=>`<button class="tab" role="tab" data-ttab="${x}" aria-selected="${S.tTab===x}">${DATA[x].name}：${esc(DATA[x].title)}</button>`).join('')}</div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px">
+    <h3>能力指標答對率 <span class="muted small">（${rs.length} 人）</span></h3>
+    <div class="skills">${skills.map(s=>`<div class="sk"><span>${esc(s.label)}<br><span class="muted small">${s.ids}</span></span>
+      <div class="bar"><i class="${s.rate==null?'':barCls(s.rate)}" style="width:${s.rate??0}%"></i></div><b style="text-align:right">${s.rate==null?'—':s.rate+'%'}</b></div>`).join('')}</div>
+  </div>
+  <div class="items">${itemStats.map(s=>`
+    <div class="item ${S.openItem===s.q.id?'open':''}"><span class="id">${s.q.id}</span>
+      <div class="txt"><button class="itembtn" data-item="${s.q.id}" aria-expanded="${S.openItem===s.q.id}">${esc(shortStem(s.q))}<span class="more">${S.openItem===s.q.id?'收合':'看原題'}</span></button><div class="muted small" style="font-family:var(--f-ui)">正確答案：${esc(rightAns(s.q))}・${esc(t.skills[s.q.skill])}</div>
+        ${s.wrongs.length?`<div class="errs">${s.wrongs.map(([k,w])=>`<span class="err">答「${esc(k)}」${w.n} 人${w.diag?`：${esc(w.diag)}`:''}</span>`).join('')}</div>`:''}</div>
+      <div class="rate"><div class="bar"><i class="${s.rate==null?'':barCls(s.rate)}" style="width:${s.rate??0}%"></i></div>
+        <span class="small">${s.rate==null?'尚無資料':`答對率 <b>${s.rate}%</b>（${s.n} 人）`}</span></div>
+      ${S.openItem===s.q.id ? `<div class="qprev"><div class="stem">${s.q.stemH}</div>${qBody(s.q, {counts:s.counts})}<div class="row"><span class="spacer"></span><button class="btn say" data-sayitem="${s.q.id}">${SPK}唸題目</button></div></div>` : ''}
+    </div>`).join('')}</div>`;
+
+  // records management
+  const allR = recs.filter(r => S.tCls==='全部' || r.cls===S.tCls).sort((a,b)=>b.ts-a.ts);
+  const manage = `
+  <details class="card"><summary>所有作答紀錄（${allR.length} 筆，含重做）</summary>
+    <p class="muted small">同一位學生重做時，統計只採用最新一次。刪除測試用或填錯的紀錄後無法復原。</p>
+    <div class="tablewrap"><table><thead><tr><th>時間</th><th>測驗</th><th>班級</th><th class="num">座號</th><th>姓名</th><th class="num">分數</th><th></th></tr></thead><tbody>
+    ${allR.map(r=>`<tr><td>${fmtTime(r.ts)}${r._local?' <span class="pill warn">未上傳</span>':''}</td><td>${DATA[r.test]?.name||r.test}</td><td>${esc(r.cls)}</td><td class="num">${r.seat}</td><td>${esc(rosterName(r.cls, r.seat) || r.name)}</td><td class="num">${r.score}</td>
+      <td>${S.delId===r.id ? `<span class="confirm"><span class="small">確定刪除？</span><button class="btn danger" data-delyes="${esc(r.id)}">刪除</button><button class="btn" data-delno="1">取消</button></span>` : `<button class="btn" data-del="${esc(r.id)}">刪除</button>`}</td></tr>`).join('')}
+    </tbody></table></div>
+  </details>`;
+
+  return `
+  <div class="topbar"><span class="brand"><span class="mark">教師專區</span></span><h1 style="font-size:1.6rem">除法小測站・學習報告</h1><span class="spacer"></span>
+    <button class="btn" id="toStart">回作答畫面</button></div>
+  <div class="row">
+    <label class="row small">班級
+      <select class="inp" id="tCls" style="width:auto;min-height:40px;padding:6px 10px">${classes.map(c=>`<option ${c===S.tCls?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+    <span class="spacer"></span>
+    <button class="btn" data-preview="pre">預覽前測</button><button class="btn" data-preview="post">預覽後測</button>
+    <button class="btn primary" id="csv">匯出成績 CSV</button>
+  </div>
+  ${S.loadErr?`<div class="notice bad">${esc(S.loadErr)}</div>`:''}${LS.get('pending',[]).length?`<div class="notice warn">這台裝置有 ${LS.get('pending',[]).length} 份作答還沒送出，已一併列在下方（標示「未上傳」）。</div>`:''}
+  ${tiles}
+  <h2>學生名單</h2>
+  ${table}
+  ${missingBlock(st)}
+  ${detail}
+  ${analysis}
+  ${manage}
+  <div class="row muted small">已登入：${esc(S.teacherEmail)}　<button class="btn" id="logout">登出</button></div>`;
+}
+
+const gv = i => i.given.every(g => g === '' || g == null) ? '空白' : i.given.map(g => g === '' ? '_' : g).join('、');
+function missingBlock(st){
+  if (!S.fullRoster.length || !st.length) return '';
+  const pre = st.filter(s=>!s.pre), post = st.filter(s=>!s.post);
+  const line = (lbl, arr) => `<div><b>${lbl}未完成（${arr.length} 人）</b>：${arr.length ? arr.map(s=>`${s.seat} ${esc(s.name)}`).join('、') : '全部完成'}</div>`;
+  return `<div class="card small" style="display:flex;flex-direction:column;gap:6px">${line('前測', pre)}${line('後測', post)}</div>`;
+}
+function shortStem(q){
+  if (q.type === 'eq') return q.expr.map(x => typeof x==='number' ? '□' : x === '\n' ? '，' : x).join('') + (q.stem.startsWith('想') || q.stem.startsWith('算') ? '' : '（' + q.stem + '）');
+  if (q.type === 'long') return q.stem;
+  return q.stem;
+}
+function rightAns(q){
+  if (q.type === 'mc') return 'ABCD'[q.ans] + '. ' + q.opts[q.ans];
+  return q.blanks.map(b => b.ans).join('、');
+}
+function fmtTime(ts){ const d = new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+function buildCSV(){
+  const recs = allRecords().filter(r => S.tCls==='全部' || r.cls===S.tCls).sort((a,b)=>a.test.localeCompare(b.test)||a.cls.localeCompare(b.cls,'zh-Hant')||a.seat-b.seat||a.ts-b.ts);
+  const q = s => '"' + String(s ?? '').replace(/"/g,'""') + '"';
+  const head = ['測驗','班級','座號','姓名','分數','答對題數','總題數','作答分鐘','交卷時間', ...Array.from({length:10},(_,i)=>`第${i+1}題`), ...Array.from({length:10},(_,i)=>`第${i+1}題作答`)];
+  const lines = [head.map(q).join(',')];
+  for (const r of recs){
+    lines.push([DATA[r.test]?.name, r.cls, r.seat, rosterName(r.cls, r.seat) || r.name, r.score, r.correct, r.total, Math.round((r.sec||0)/6)/10, new Date(r.ts).toLocaleString('zh-TW'),
+      ...r.items.map(i=>i.ok?1:0), ...r.items.map(i=>i.given.join('/'))].map(q).join(','));
+  }
+  return '﻿' + lines.join('\r\n');
+}
+
+/* ---------------- events ---------------- */
+function bind(){
+  const on = (sel, ev, fn) => document.querySelectorAll(sel).forEach(el => el.addEventListener(ev, fn));
+  on('#zyToggle','change', e => { S.zhuyin = e.target.checked; LS.set('zhuyin', S.zhuyin); render(); });
+
+  if (S.view === 'start'){
+    on('[data-test]','click', e => { S.test = e.currentTarget.dataset.test; render(); });
+    const upd = () => { const ok = S.test && S.cls.trim() && S.seat && S.name.trim(); $('#go').disabled = !ok; $('#go').nextElementSibling.textContent = ok ? '' : '還沒選測驗或還沒選名字'; };
+    on('#cls','input', e => { S.cls = e.target.value; upd(); });
+    on('#seat','input', e => { e.target.value = norm(e.target.value).replace(/\D/g,''); S.seat = e.target.value; upd(); });
+    on('#name','input', e => { S.name = e.target.value; upd(); });
+    on('[data-cls]','click', e => { S.cls = e.currentTarget.dataset.cls; S.seat=''; S.name=''; render(); });
+    on('[data-seat]','click', e => { S.seat = e.currentTarget.dataset.seat; S.name = e.currentTarget.dataset.masked; render(); });
+    on('#manual','click', () => { S.manual = true; S.seat=''; S.name=''; render(); });
+    on('#useList','click', () => { S.manual = false; S.seat=''; S.name=''; render(); });
+    on('#go','click', () => { LS.set('cls', S.cls.trim()); S.cls = S.cls.trim(); S.name = S.name.trim(); S.answers = {}; S.idx = 0; S.t0 = Date.now(); S.preview = false; S.view = 'quiz'; render(); });
+    on('#toTeacher','click', openTeacher);
+  }
+  if (S.view === 'quiz' || S.view === 'review'){
+    on('.nin','input', e => { const el = e.target; el.value = norm(el.value).replace(/\D/g,'').slice(0,3);
+      const a = S.answers[el.dataset.q] || (S.answers[el.dataset.q] = []); a[+el.dataset.k] = el.value;
+      const t = curTest(); const i = t.items.findIndex(x=>x.id===el.dataset.q); const dot = document.querySelectorAll('.dot')[i]; if (dot) dot.classList.toggle('done', isAnswered(t.items[i])); });
+    on('.nin','keydown', e => { if (e.key === 'Enter'){ const all = [...document.querySelectorAll('.nin')]; const i = all.indexOf(e.target); if (all[i+1]) all[i+1].focus(); else ($('#next')||$('#toReview'))?.click(); } });
+    on('[data-opt]','click', e => { const q = curTest().items[S.idx]; S.answers[q.id] = +e.currentTarget.dataset.opt; render(); });
+    on('[data-go]','click', e => { S.idx = +e.currentTarget.dataset.go; S.view = 'quiz'; render(); focusFirst(); });
+    on('#prev','click', () => { S.idx--; render(); focusFirst(); });
+    on('#next','click', () => { S.idx++; render(); focusFirst(); });
+    on('#toReview','click', () => { S.view = 'review'; render(); });
+    on('#say','click', () => speak(curTest().items[S.idx].say));
+    on('#submit','click', submit);
+  }
+  if (S.view === 'done'){
+    on('#nextKid','click', () => { S.seat=''; S.name=''; S.manual=false; S.answers={}; S.result=null; S.view='start'; S.preview=false; render(); });
+    on('#backTeacher','click', () => { S.preview=false; S.view='teacher'; render(); });
+  }
+  if (S.view === 'pin'){
+    on('#loginForm','submit', async e => {
+      e.preventDefault();
+      if (!CFG_OK){ S.loginErr = '網頁還沒填入 Supabase 網址與金鑰。'; render(); return; }
+      S.teacherEmail = $('#lEmail').value.trim(); const pw = $('#lPass').value;
+      S.loginBusy = true; S.loginErr = ''; render();
+      try {
+        const c = await getClient();
+        const {error} = await c.auth.signInWithPassword({email:S.teacherEmail, password:pw});
+        S.loginBusy = false;
+        if (error){ S.loginErr = 'Email 或密碼不對，請再試一次。'; render(); return; }
+        S.authed = true; S.view = 'teacher'; render(); startTeacher();
+      } catch(err){ S.loginBusy = false; S.loginErr = '連不上 Supabase，請確認網路。'; render(); }
+    });
+    on('#toStart','click', () => { S.view='start'; render(); });
+    $('#lEmail')?.focus();
+  }
+  if (S.view === 'teacher'){
+    on('#toStart','click', () => { S.view='start'; render(); });
+    on('#tCls','change', e => { S.tCls = e.target.value; S.selKey=null; render(); });
+    on('[data-ttab]','click', e => { S.tTab = e.currentTarget.dataset.ttab; S.openItem = null; render(); });
+    on('[data-item]','click', e => { const id = e.currentTarget.dataset.item; S.openItem = S.openItem === id ? null : id; render(); });
+    on('[data-sayitem]','click', e => { const id = e.currentTarget.dataset.sayitem; const q = DATA[S.tTab].items.find(x=>x.id===id); if (q) speak(q.say); });
+    on('[data-stu]','click', e => { S.selKey = e.currentTarget.dataset.stu; render(); document.querySelector('.detail')?.scrollIntoView({behavior:'smooth', block:'nearest'}); });
+    on('#closeStu','click', () => { S.selKey=null; render(); });
+    on('[data-preview]','click', e => { S.test = e.currentTarget.dataset.preview; S.preview = true; S.cls='教師'; S.seat='0'; S.name='預覽'; S.answers={}; S.idx=0; S.t0=Date.now(); S.view='quiz'; render(); });
+    on('[data-del]','click', e => { S.delId = e.currentTarget.dataset.del; render(); });
+    on('[data-delno]','click', () => { S.delId = null; render(); });
+    on('[data-delyes]','click', async e => {
+      const id = e.currentTarget.dataset.delyes;
+      const pend = LS.get('pending', []);
+      if (pend.some(r=>r.client_id===id)) LS.set('pending', pend.filter(r=>r.client_id!==id));
+      else {
+        const {error} = await sb.from('results').delete().eq('id', id);
+        if (error) S.loadErr = '刪除失敗：' + error.message; else S.records = S.records.filter(r => r.id !== id);
+      }
+      S.delId = null; render();
+    });
+    on('#csv','click', () => {
+      const blob = new Blob([buildCSV()], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `除法小測站成績_${S.tCls}_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    });
+    on('#logout','click', async () => { try { await sb.auth.signOut(); } catch(e){} if (channel){ sb.removeChannel(channel); channel = null; }
+      S.authed = false; S.records = []; S.fullRoster = []; S.dbLoaded = false; teacherStarted = false; S.view = 'start'; render(); });
+  }
+}
+function focusFirst(){ const el = document.querySelector('.nin'); if (el && !el.value) el.focus({preventScroll:true}); }
+
+async function submit(){
+  const t = curTest();
+  const g = grade(t, S.answers);
+  S.result = g; S.view = 'done';
+  if (S.preview){ render(); return; }
+  S.saveState = 'saving'; render();
+  const rec = {test:t.id, cls:S.cls, seat:Number(S.seat), name:S.name, score:g.score, correct:g.correct, total:g.total,
+    items:g.items, ts:Date.now(), sec:Math.round((Date.now()-S.t0)/1000)};
+  S.saveState = await saveRecord(rec);
+  if (S.view === 'done') render();
+}
+
+let teacherStarted = false;
+async function openTeacher(){
+  if (S.authed){ S.view = 'teacher'; render(); return; }
+  if (CFG_OK){
+    try { const c = await getClient(); const {data} = await c.auth.getSession();
+      if (data && data.session){ S.authed = true; S.teacherEmail = data.session.user.email || ''; S.view = 'teacher'; render(); startTeacher(); return; } } catch(e){}
+  }
+  S.loginErr = ''; S.view = 'pin'; render();
+}
+async function loadAll(){
+  const out = []; const page = 1000;
+  for (let from = 0; ; from += page){
+    const {data, error} = await sb.from('results').select('*').order('ts', {ascending:true}).range(from, from + page - 1);
+    if (error) throw error;
+    out.push(...data); if (data.length < page) break;
+  }
+  return out;
+}
+async function startTeacher(){
+  if (teacherStarted) return; teacherStarted = true;
+  flushPending();
+  const timer = setTimeout(() => { if (!S.dbLoaded){ S.dbSlow = true; if (S.view==='teacher') render(); } }, 10000);
+  try {
+    S.records = await loadAll(); S.loadErr = '';
+    try { const {data} = await sb.from('roster').select('cls,seat,name').order('seat'); if (data) S.fullRoster = data; } catch(e){}
+    if (!S.records.length){
+      // 檢查是否在教師名單內
+      const {data} = await sb.rpc('is_teacher');
+      if (data === false) S.loadErr = '這個帳號不在教師名單裡，看不到成績。請在 Supabase 的 teachers 資料表加入這個 Email。';
+    }
+  } catch(e){ S.loadErr = '讀取成績失敗：' + (e.message || '請確認網路'); }
+  S.dbLoaded = true; clearTimeout(timer);
+  if (S.view === 'teacher') render();
+  channel = sb.channel('results-live')
+    .on('postgres_changes', {event:'*', schema:'public', table:'results'}, payload => {
+      if (payload.eventType === 'INSERT') S.records = [...S.records.filter(r => r.id !== payload.new.id), payload.new];
+      else if (payload.eventType === 'DELETE') S.records = S.records.filter(r => r.id !== payload.old.id);
+      if (S.view === 'teacher') render();
+    }).subscribe();
+}
+
+render();
+</script>
+
+</body>
+</html>
